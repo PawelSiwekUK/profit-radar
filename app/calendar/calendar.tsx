@@ -3,6 +3,7 @@ import { format, isSameDay } from 'date-fns';
 import { useEffect, useMemo, useState } from 'react';
 import { CalendarType, SaleListType } from '@/lib/types/calendar-type';
 import RefreshButton from '@/app/components/common/buttons/refreshButton';
+import SortAndFilter from './sortAndFilter';
 
 type CalendarDay = {
 	date: Date;
@@ -92,6 +93,34 @@ export default function Calendar({ allAuctions, todaysEvents }: { allAuctions: C
 		);
 	}
 
+	function orderNextSalesByNewest(saleList: SaleListType[]) {
+		return [...saleList].sort((a, b) => {
+			const aHasNext = !!a.nextSale;
+			const bHasNext = !!b.nextSale;
+
+			// missing nextSale goes to the end
+			if (aHasNext && !bHasNext) return -1;
+			if (!aHasNext && bHasNext) return 1;
+			if (!aHasNext && !bHasNext) return 0;
+
+			// when both have nextSale, sort by date descending
+			const aDate = new Date(a.nextSale ?? '').getTime();
+			const bDate = new Date(b.nextSale ?? '').getTime();
+			return aDate - bDate; // newest first
+		});
+	}
+	function orderNextSalesByLatest(saleList: SaleListType[]) {
+		return [...saleList].sort((a, b) => {
+			const aDate = new Date(a.nextSale ?? '').getTime();
+			const bDate = new Date(b.nextSale ?? '').getTime();
+			return aDate - bDate;
+		});
+	}
+
+	function filterDuplicates(saleList: SaleListType[]) {
+		return [...saleList].filter((a, b) => {});
+	}
+
 	function DayButton({ day }: { day: CalendarDay }) {
 		const isTodaySelected = isSameDay(day.date, selectedDay);
 		const setDayEvents = (date: Date, events: SaleListType[], setDisplayDay: React.Dispatch<React.SetStateAction<SaleListType[]>>) => {
@@ -178,11 +207,12 @@ export default function Calendar({ allAuctions, todaysEvents }: { allAuctions: C
 						</div>
 					</div>
 				</div>
-				<div className='border-t border-gray-200 px-6 py-4'>
-					<ol className='divide-y divide-gray-200'>
-						{displayDay.map((event, i) => (
+				<SortAndFilter></SortAndFilter>
+				<div className=' px-6 py-4'>
+					<ol className='divide-y divide-gray-200 '>
+						{orderNextSalesByNewest(displayDay).map((event, i) => (
 							<li key={i} className='flex items-center space-x-4 py-4'>
-								<div className='flex-1'>
+								<div className='flex-1 '>
 									<h3 className='text-md font-medium text-gray-900'>{event.saleName}</h3>
 									<dl className='mt-1 text-xs text-gray-500'>
 										<dd className='flex flex-col gap-2 text-[14px] md:flex-row md:items-center md:gap-5'>
