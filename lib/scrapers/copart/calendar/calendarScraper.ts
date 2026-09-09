@@ -9,6 +9,8 @@ const pageOptions: GoToOptions = {
 };
 
 export default async function scrapeCopartCalendar(signal?: AbortSignal) {
+	const totalSteps = 4;
+	console.log(`Launching Calendar scraper 1/${totalSteps}`);
 	const scrapedCalendarMonth: CalendarType = createEmptyCalendarList();
 	const options = {
 		headless: false, // set to true in production
@@ -29,7 +31,7 @@ export default async function scrapeCopartCalendar(signal?: AbortSignal) {
 	const page = await browser.newPage();
 
 	try {
-		console.log('Launching Copart calendar page:', copartCalendarUrl);
+		console.log('Launching Copart calendar page:', copartCalendarUrl, `2/${totalSteps}`);
 		await page.goto(copartCalendarUrl, pageOptions);
 		await page.waitForSelector('[data-uname="saleslistSaletimeval"]', {
 			timeout: 10000,
@@ -56,7 +58,7 @@ export default async function scrapeCopartCalendar(signal?: AbortSignal) {
 				.filter((item): item is NonNullable<typeof item> => item !== null);
 		});
 
-		console.log(`Scraped ${data.length} rows`);
+		console.log(`Scraped ${data.length} rows. 3/${totalSteps}`);
 		scrapedCalendarMonth.auctions = data;
 		scrapedCalendarMonth.scrapedAt = new Date();
 		scrapedCalendarMonth.totalAuctions = data.length;
@@ -67,6 +69,8 @@ export default async function scrapeCopartCalendar(signal?: AbortSignal) {
 		return createEmptyCalendarList();
 	} finally {
 		signal?.removeEventListener('abort', stopScraper);
+		console.log(`Closing Calendar scraper 4/${totalSteps}`);
+
 		await browser?.close().catch(() => undefined);
 	}
 }
