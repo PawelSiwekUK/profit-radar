@@ -54,7 +54,7 @@ export async function updateCalendar(scrapedCalendar: CalendarType) {
 			await connectDB();
 			const CalendarSaleList = new CalendarSaleModel(scrapedCalendar);
 			await CalendarSaleList.save();
-			message = 'Saved new Calendar with sale lists!';
+			message = 'Saved initial calendar with sale lists!';
 		} catch (error) {
 			message = error instanceof Error ? error.message : String(error);
 		}
