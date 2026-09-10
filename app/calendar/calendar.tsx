@@ -1,9 +1,10 @@
 'use client';
-import { format, isSameDay } from 'date-fns';
+import { format, isSameDay, isPast } from 'date-fns';
 import { useEffect, useMemo, useState } from 'react';
 import { CalendarType, SaleListType } from '@/lib/types/calendar-type';
 import RefreshButton from '@/app/components/common/buttons/refreshButton';
 import SortAndFilter from './sortAndFilter';
+import { X } from 'lucide-react';
 
 type CalendarDay = {
 	date: Date;
@@ -56,6 +57,7 @@ export default function Calendar({ allAuctions, todaysEvents }: { allAuctions: C
 	const [displayDay, setDisplayDay] = useState<SaleListType[]>(todaysEvents);
 	const [loading, setLoading] = useState(true);
 	const [selectedDay, setSelectedDay] = useState(currentDate);
+	const [openSaleId, setOpenSaleId] = useState<string | null>(null);
 
 	useEffect(() => {
 		setDisplayDay(todaysEvents);
@@ -128,7 +130,7 @@ export default function Calendar({ allAuctions, todaysEvents }: { allAuctions: C
 
 			const filteredEvents = events.filter((evt) => {
 				if (evt.currentSale === 'LIVE NOW') {
-					evt.currentSale = new Date();
+					return;
 				}
 				if (evt?.currentSale) {
 					return format(new Date(evt?.currentSale), 'yyyy-MM-dd') === iso;
@@ -208,41 +210,102 @@ export default function Calendar({ allAuctions, todaysEvents }: { allAuctions: C
 					</div>
 				</div>
 				<SortAndFilter></SortAndFilter>
-				<div className=' px-6 py-4'>
+				<div className=' px-6 pb-4'>
 					<ol className='divide-y divide-gray-200 '>
-						{orderNextSalesByNewest(displayDay).map((event, i) => (
-							<li key={i} className='flex items-center space-x-4 py-4'>
-								<div className='flex-1 '>
-									<h3 className='text-md font-medium text-gray-900'>{event.saleName}</h3>
-									<dl className='mt-1 text-xs text-gray-500'>
-										<dd className='flex flex-col gap-2 text-[14px] md:flex-row md:items-center md:gap-5'>
-											<div className='flex'>
-												<div className='mr-2 font-bold'>Current sale:</div>
-												<time>{getDate(event.currentSale)}</time>
-											</div>
+						{orderNextSalesByNewest(displayDay).map((event, i) => {
+							const isOpen = openSaleId === event.saleName; // or event id if available
 
-											<div className='flex'>
-												<div className='mr-2 font-bold'>Next sale:</div>
-												<time>{getDate(event.nextSale)}</time>
-											</div>
+							return (
+								<li key={i} className='flex items-center space-x-4 py-4'>
+									<div className='flex-1 '>
+										<h3 className='text-md font-medium text-gray-900'>{event.saleName}</h3>
+										<dl className='mt-1 text-xs text-gray-500'>
+											<dd className='flex flex-col gap-2 text-[14px] md:flex-row md:items-center md:gap-5'>
+												<div className='flex'>
+													<div className='mr-2 font-bold'>Current sale:</div>
+													<time>{getDate(event.currentSale)}</time>
+												</div>
 
-											<div className='flex'>
-												<div className='mr-2 font-bold'>Sale type:</div>
-												<div>{event.saleType}</div>
+												<div className='flex'>
+													<div className='mr-2 font-bold'>Next sale:</div>
+													<time>{getDate(event.nextSale)}</time>
+												</div>
+
+												<div className='flex'>
+													<div className='mr-2 font-bold'>Sale type:</div>
+													<div>{event.saleType}</div>
+												</div>
+											</dd>
+										</dl>
+									</div>
+									<div className='flex-shrink-0 relative'>
+										<button
+											type='button'
+											onClick={() => setOpenSaleId(isOpen ? null : event.saleName)}
+											aria-expanded={isOpen}
+											className='hover:bg-gray-100 size-7 flex'>
+											<span className='sr-only'>Open options</span>
+
+											<svg viewBox='0 0 20 20' fill='currentColor' className='h-5 w-5 m-auto'>
+												<path d='M3 10a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0ZM8.5 10a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0ZM15.5 8.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3Z' />
+											</svg>
+										</button>
+
+										<div
+											id='dropdown'
+											className={
+												isOpen
+													? 'absolute -right-15 w-60  pl-8 pr-4 flex justify-end items-center gap-0.50 h-44 inline-flex flex-col justify-start items-start gap-2.5 z-100'
+													: 'hidden'
+											}>
+											<div className='cursor-pointer self-stretch  p-1.5 bg-white rounded-sm shadow-[0px_0px_8px_0px_rgba(0,0,0,0.15)] flex flex-col justify-center items-start overflow-hidden '>
+												<div
+													className='flex justify-end  p-1 w-full'
+													onClick={() => {
+														setOpenSaleId(null);
+													}}>
+													<div className='flex size-5 hover:bg-gray-100'>
+														<X size={15} className='m-auto' />
+													</div>
+												</div>
+												<div
+													onClick={() => {
+														console.log(event);
+													}}
+													className='self-stretch px-2 py-1.5 hover:bg-gray-100 inline-flex justify-between items-center'>
+													<div className=' flex justify-start items-center gap-1 cursor-pointer'>
+														<div className=' flex justify-start items-center gap-1'>
+															<div data-property-1='Default' className=' flex justify-start items-center gap-2.5 overflow-hidden'>
+																<div className='justify-center text-neutral-700 text-sm font-normal  leading-5'>Console log sale.</div>
+															</div>
+														</div>
+													</div>
+													<div className=' pr-4 flex justify-end items-center gap-0.5' />
+												</div>
+												<div className='self-stretch px-2 py-1.5 hover:bg-gray-100 inline-flex justify-between items-center'>
+													<div className=' flex justify-start items-center gap-1'>
+														<div className=' flex justify-start items-center gap-1'>
+															<div data-property-1='Default' className=' flex justify-start items-center gap-2.5 overflow-hidden'>
+																<div className='justify-center text-neutral-700 text-sm font-normal  leading-5'>Scrape this sale</div>
+															</div>
+														</div>
+													</div>
+												</div>
+												<div className='self-stretch px-2 py-1.5 hover:bg-gray-100 inline-flex justify-between items-center'>
+													<div className=' flex justify-start items-center gap-1'>
+														<div className=' flex justify-start items-center gap-1'>
+															<div data-property-1='Default' className=' flex justify-start items-center gap-2.5 overflow-hidden'>
+																<div className='justify-center text-neutral-700 text-sm font-normal  leading-5'>null </div>
+															</div>
+														</div>
+													</div>
+												</div>
 											</div>
-										</dd>
-									</dl>
-								</div>
-								<div className='flex-shrink-0'>
-									<button type='button' className='text-gray-400 hover:text-gray-500'>
-										<span className='sr-only'>Open options</span>
-										<svg viewBox='0 0 20 20' fill='currentColor' className='h-5 w-5'>
-											<path d='M3 10a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0ZM8.5 10a1.5 1.5 0 1 1 3 0 1.5 1.5 0 0 1-3 0ZM15.5 8.5a1.5 1.5 0 1 0 0 3 1.5 1.5 0 0 0 0-3Z' />
-										</svg>
-									</button>
-								</div>
-							</li>
-						))}
+										</div>
+									</div>
+								</li>
+							);
+						})}
 					</ol>
 				</div>
 			</div>
