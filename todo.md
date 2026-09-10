@@ -34,4 +34,5 @@
 
 - [x] Add check for duplicates sales to avoid saving same sale lists twice.
 - [x] Create check for duplicates sales lists in the fetchAllSaleLists route.
-- [ ] Fix the bug of the old sales from May added to current sale.
+- [x] Fix the bug of the old sales from May added to current sale. It was caused by LIVE NOW check and addition of todays date even for old sales which where scraped at that time and never updated.
+- [ ] Add sync for 'Next Sale' for sales scraped without it. At the moment scraper gets some sales without "Next Sales" and then never up date it when copart adds them to calendar. On every scrape it should be checked compared and updated.
